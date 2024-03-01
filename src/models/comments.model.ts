@@ -1,65 +1,65 @@
-import { Schema, Document, model } from "mongoose";
+import { Schema, Document, model, ObjectId } from "mongoose";
 
-// =============== User Interface ===============
-export interface Users extends Document{
-    fullName: string;
-    username: string;
-    email: string;
-    isLoggedin: boolean;
-    role: boolean;
-    image: string;
-    accessToken: string;
-    verificationToken: string;
-    verificationTokenExpires: Date;
+// =============== Comment Interface ===============
+export interface Comments extends Document{
+    whichPost: ObjectId;
+    content: string;
+    commentedBy: ObjectId;
+    parent?: ObjectId | Comments;
+    status: "approved" | "pending";
+    likes?: ObjectId[];
+    dislikes?: ObjectId[];
+    isReported?: boolean;
+    replies?: number;
 }
 
 
-// =============== User Schema ===============
-export const UserSchema = new Schema(
+// =============== Comment Schema ===============
+export const CommentSchema = new Schema<Comments>(
     {
-        fullName: {
-            type: String,
-            minLength: [3, "Full Name must be at least 3 characters long"],
+        whichPost: {
+            type: Schema.Types.ObjectId,
+            ref: "posts",
+            required: [true, "Post ID is required"]
         },
-        username: {
+        content: {
             type: String,
-            required: [true, "Username is required"],
-            unique: true
+            required: [true, "Content is required"]
         },
-        email: {
+        commentedBy: {
+            type: Schema.Types.ObjectId,
+            ref: "users",
+            required: [true, "User ID is required"]
+        },
+        parent: {
+            type: Schema.Types.ObjectId,
+            ref: "Comments"
+        },
+        status: {
             type: String,
-            required: [true, "Email is required"],
-            unique: true,
-            lowercase: true,
+            enum: ["approved", "pending"],
+            default: "pending"
         },
-        isLoggedin: {
+        likes: [{
+            type: Schema.Types.ObjectId,
+            ref: "users"
+        }],
+        dislikes: [{
+            type: Schema.Types.ObjectId,
+            ref: "users"
+        }],
+        isReported: {
             type: Boolean,
             default: false
         },
-        role: {
-            type: String,
-            enum: ["user", "admin"],
-            default: "user"
+        replies: {
+            type: Number,
+            default: 0
         },
-        image: {
-            type: String
-        },
-        accessToken: {
-            type: String,
-            default: null
-        },
-        verificationToken: {
-            type: String,
-            default: null
-        },
-        verificationTokenExpires: {
-            type: Date,
-            default: null
-        }
     },
     { timestamps: true }
 );
 
 
-// =============== User Model ================
-export const UserModel = model<Users>('users', UserSchema);
+// =============== Comment Model ================
+export const CommentModel = model<Comments>('comments', CommentSchema);

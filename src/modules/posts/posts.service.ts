@@ -4,10 +4,15 @@ import { Model, Error } from 'mongoose';
 import { slugGenerator, handleValidationError, handleMongoServerError } from '../../utils/utils';
 import { Posts } from 'src/models/posts.model';
 
+import { Comments } from 'src/models/comments.model';
+
 
 @Injectable()
 export class PostsService {
-    constructor(@InjectModel("Posts") private readonly postModel: Model<Posts>) {}
+    constructor(
+        @InjectModel("Posts") private readonly postModel: Model<Posts>,
+        @InjectModel("Comments") private readonly commentModel: Model<Comments>
+    ) {}
 
 
     // ========== Add New Post ==========
@@ -51,7 +56,7 @@ export class PostsService {
     // ========== Get Specific Post Via ID ==========
     async findOne(id: string): Promise<{ post: {} }> {
         try {
-            const post = await this.postModel.findById(id);
+            const post = await this.postModel.findById(id).select('-__v').exec();
             if (!post) throw new NotFoundException('post not found');
             return { post }
         } catch (error) {
@@ -78,7 +83,7 @@ export class PostsService {
                 data['slug'] = await slugGenerator(payload.title, this.postModel);
             }
 
-            const post = await this.postModel.findByIdAndUpdate(id, data, {new: true});
+            const post = await this.postModel.findByIdAndUpdate(id, data, {new: true}).select('-__v').exec();
             if (!post) throw new NotFoundException('Post not found');
             return { post }
         } catch (error) {
@@ -91,11 +96,82 @@ export class PostsService {
             }
         }
     }
+    
+
+    // ========== Update Likes of the Post Via ID ===============
+    async updateLikes(id: string, payload: any): Promise<{post: {}}> {
+        try {
+            if (!payload.userID) throw new NotFoundException('User ID is missing');
+
+            const update = {};
+            const options = { new: true };
+
+            const existingPost = await this.postModel.findById(id);
+            if (!existingPost) throw new NotFoundException('Post not found');
+
+            const isLiked = existingPost.likes.includes(payload.userID);
+            const isDisliked = existingPost.dislikes.includes(payload.userID);
+
+            if (isLiked) {
+                update["$pull"] = { likes: payload.userID };
+            } else {
+                update["$addToSet"] = { likes: payload.userID };
+                if (isDisliked) update["$pull"] = { dislikes: payload.userID };
+            }
+
+            const updatedPost = await this.postModel.findByIdAndUpdate(id, update, options);
+            return { post: updatedPost }
+        } catch (error) {
+            if (error instanceof Error.CastError) {
+                throw new NotFoundException('Invalid post ID');
+            } else if (error.name === "NotFoundException") {
+                throw new NotFoundException('Post not found');
+            } else {
+                throw new InternalServerErrorException('Failed to update post like');
+            }
+        }
+    }
+
+
+    // ========== Update Dislikes of the Post Via ID ===============
+    async updateDislikes(id: string, payload: any): Promise<{post: {}}> {
+        try {
+            if (!payload.userID) throw new NotFoundException('User ID is missing');
+
+            const update = {};
+            const options = { new: true };
+
+            const existingPost = await this.postModel.findById(id);
+            if (!existingPost) throw new NotFoundException('Post not found');
+
+            const isLiked = existingPost.likes.includes(payload.userID);
+            const isDisliked = existingPost.dislikes.includes(payload.userID);
+
+            if (isDisliked) {
+                update["$pull"] = { dislikes: payload.userID };
+            } else {
+                update["$addToSet"] = { dislikes: payload.userID };
+                if (isLiked) update["$pull"] = { likes: payload.userID };
+            }
+
+            const updatedPost = await this.postModel.findByIdAndUpdate(id, update, options);
+            return { post: updatedPost }
+        } catch (error) {
+            if (error instanceof Error.CastError) {
+                throw new NotFoundException('Invalid post ID');
+            } else if (error.name === "NotFoundException") {
+                throw new NotFoundException('Post not found');
+            } else {
+                throw new InternalServerErrorException('Failed to update post like');
+            }
+        }
+    }
 
 
     // ========== Delete Post Via ID ==========
     async delete(id: string): Promise<{ message: string }> {
         try {
+            await this.commentModel.deleteMany({ whichPost: id });
             const deletedPost = await this.postModel.findByIdAndDelete(id);
             if (!deletedPost) throw new NotFoundException('Post not found');
             return { message: "Post successfully deleted" };

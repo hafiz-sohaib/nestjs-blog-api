@@ -1,10 +1,10 @@
-import { Schema, Document, model } from "mongoose";
+import { Schema, Document, model, ObjectId } from "mongoose";
 
 // =============== Category Interface ===============
 export interface Categories extends Document{
     title: string;
     slug: string;
-    parent?: string | Categories;
+    parent?: ObjectId | Categories;
     status: "published" | "draft";
 }
 
