@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model, Error } from 'mongoose';
 import slugify from 'slugify';
 import { Tags } from 'src/models/tags.model';
-import { handleMongoServerError, handleValidationError } from "src/utils/utils";
+import { handleMongoServerError, handleValidationError } from "src/helpers/mongooseError.helper";
 
 
 @Injectable()

@@ -1,5 +1,6 @@
 import { Schema, Document, model } from "mongoose";
 
+
 // =============== Tag Interface ===============
 export interface Tags extends Document{
     title: string;

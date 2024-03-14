@@ -1,5 +1,6 @@
 import { Schema, Document, model, ObjectId } from "mongoose";
 
+
 // =============== Category Interface ===============
 export interface Categories extends Document{
     title: string;

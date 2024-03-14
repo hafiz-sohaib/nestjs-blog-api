@@ -1,17 +1,21 @@
-import { Body, Controller, Get, Post, Delete, Param, Patch, Query, UseInterceptors, UploadedFiles } from '@nestjs/common';
-import { fileUpload } from "../../utils/utils"
+import { Body, Controller, Get, Post, Delete, Param, Patch, Query, UseInterceptors, UploadedFiles, UseGuards, Request } from '@nestjs/common';
+import { fileUpload } from "../../helpers/mongooseError.helper"
 import { PostsService } from './posts.service';
+import { AuthGuard } from 'src/guards/auth.guard';
+import { RoleGuard } from 'src/guards/role.guard';
 
 
 @Controller('posts')
 export class PostsController {
     constructor(private readonly postsService: PostsService) {}
 
+
     // ========== Add New Post ==========
     @Post()
+    @UseGuards(AuthGuard, new RoleGuard('user'))
     @UseInterceptors(fileUpload('featuredImage'))
-    async addPost(@Body() payload: any, @UploadedFiles() featuredImage: any) {
-        return await this.postsService.create(payload, featuredImage);
+    async addPost(@Request() request: any, @Body() payload: any, @UploadedFiles() featuredImage: any) {
+        return await this.postsService.create({ ...payload, author: request?.user._id }, featuredImage);
     }
 
 
@@ -31,9 +35,10 @@ export class PostsController {
 
     // ========== Update Post Via ID ==========
     @Patch(':id')
+    @UseGuards(AuthGuard, new RoleGuard('user'))
     @UseInterceptors(fileUpload('featuredImage'))
-    async updatePost(@Param('id') id: string, @Body() payload: any, @UploadedFiles() featuredImage: any) {
-        return await this.postsService.update(id, payload, featuredImage);
+    async updatePost(@Param('id') id: string, @Request() request: any, @Body() payload: any, @UploadedFiles() featuredImage: any) {
+        return await this.postsService.update(id, { ...payload, author: request?.user._id }, featuredImage);
     }
 
 
@@ -53,7 +58,8 @@ export class PostsController {
 
     // ========== Delete Post Via ID ==========
     @Delete(':id')
-    async deletePost(@Param('id') id: string) {
-        return await this.postsService.delete(id);
+    @UseGuards(AuthGuard, new RoleGuard('user'))
+    async deletePost(@Param('id') id: string, @Request() request: any) {
+        return await this.postsService.delete(id, request?.user._id);
     }
 }

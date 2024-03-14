@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, NotFoundException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Error } from 'mongoose';
-import { handleValidationError, handleMongoServerError } from '../../utils/utils';
+import { handleValidationError, handleMongoServerError } from '../../helpers/mongooseError.helper';
 import { Comments } from 'src/models/comments.model';
 import { Posts } from 'src/models/posts.model';
 

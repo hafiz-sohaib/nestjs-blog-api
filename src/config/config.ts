@@ -1,4 +1,5 @@
 import { MongooseModuleOptions } from '@nestjs/mongoose';
+import { globalConstants } from './constants';
 
-const mongooseConfig: MongooseModuleOptions = {uri: "mongodb+srv://admin:WhiteMagic@mycluster.kbteo6o.mongodb.net/nestjs-blog-app?retryWrites=true&w=majority"};
+const mongooseConfig: MongooseModuleOptions = {uri: globalConstants.databaseUrl};
 export default mongooseConfig;

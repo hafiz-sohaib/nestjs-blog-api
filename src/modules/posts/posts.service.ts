@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, NotFoundException, InternalServerErrorException, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Error } from 'mongoose';
-import { slugGenerator, handleValidationError, handleMongoServerError } from '../../utils/utils';
+import { slugGenerator, handleValidationError, handleMongoServerError } from '../../helpers/mongooseError.helper';
 import { Posts } from 'src/models/posts.model';
 
 import { Comments } from 'src/models/comments.model';
@@ -83,7 +83,7 @@ export class PostsService {
                 data['slug'] = await slugGenerator(payload.title, this.postModel);
             }
 
-            const post = await this.postModel.findByIdAndUpdate(id, data, {new: true}).select('-__v').exec();
+            const post = await this.postModel.findOneAndUpdate({ _id: id, author: payload.author }, data, {new: true}).select('-__v').exec();
             if (!post) throw new NotFoundException('Post not found');
             return { post }
         } catch (error) {
@@ -169,10 +169,10 @@ export class PostsService {
 
 
     // ========== Delete Post Via ID ==========
-    async delete(id: string): Promise<{ message: string }> {
+    async delete(id: string, userID: string): Promise<{ message: string }> {
         try {
             await this.commentModel.deleteMany({ whichPost: id });
-            const deletedPost = await this.postModel.findByIdAndDelete(id);
+            const deletedPost = await this.postModel.findOneAndDelete({ _id: id, author: userID });
             if (!deletedPost) throw new NotFoundException('Post not found');
             return { message: "Post successfully deleted" };
         } catch (error) {

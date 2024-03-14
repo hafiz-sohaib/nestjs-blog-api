@@ -1,4 +1,6 @@
 import { Schema, Document, model } from "mongoose";
+import { randomBytes, createHash } from "crypto"
+
 
 // =============== User Interface ===============
 export interface Users extends Document{
@@ -6,16 +8,17 @@ export interface Users extends Document{
     username: string;
     email: string;
     isLoggedin: boolean;
-    role: boolean;
+    role: "user" | "admin";
     image: string;
     accessToken: string;
     verificationToken: string;
     verificationTokenExpires: Date;
+    generateVerificationToken(): Promise<string>;
 }
 
 
 // =============== User Schema ===============
-export const UserSchema = new Schema(
+export const UserSchema = new Schema<Users>(
     {
         fullName: {
             type: String,
@@ -59,6 +62,14 @@ export const UserSchema = new Schema(
     },
     { timestamps: true }
 );
+
+
+UserSchema.methods.generateVerificationToken = async function (): Promise<string> {
+    const token = randomBytes(32).toString("hex");
+    this.verificationToken = createHash('sha256').update(token).digest("hex");
+    this.verificationTokenExpires = Date.now() + 10 * 60 * 1000;
+    return token;
+}
 
 
 // =============== User Model ================

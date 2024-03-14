@@ -5,7 +5,7 @@ import slugify from 'slugify';
 import { Categories } from 'src/models/categories.model';
 import { Comments } from 'src/models/comments.model';
 import { Posts } from 'src/models/posts.model';
-import { handleMongoServerError, handleValidationError } from "src/utils/utils";
+import { handleMongoServerError, handleValidationError } from "src/helpers/mongooseError.helper";
 
 
 @Injectable()

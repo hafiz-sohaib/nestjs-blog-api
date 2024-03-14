@@ -1,5 +1,6 @@
 import { Schema, Document, model, ObjectId } from "mongoose";
 
+
 // =============== Post Interface ===============
 export interface Posts extends Document{
     title: string;
